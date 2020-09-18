@@ -39,7 +39,7 @@
         <div class="box">
             <div class="left">
                 <div>
-                    <canvas id="myChart"></canvas>
+                    <canvas id="myChart" style="display:block; height:300px;width:408px"></canvas>
                     <div class="chart_btm">
                         <span>0시</span>
                         <span>6시</span>
@@ -49,16 +49,24 @@
                     </div>
                 </div>
 
-                <div class="toggle_btn_container">
-                    <div class="toggle_btn_box">
-                        <input class="toggle_input " id="toggle_btn" type="checkbox" />
-                        <label class="toggle_label" for="toggle_btn">
-                            <span class="txt1">자동</span>
-                            <span class="txt2">수동</span>
-                        </label>
-                    </div>
+                <div class="reload_button" style="float:left;margin-top:10px;margin-left:40px">
+                    <button type="button" onclick="location.href='http://localhost:7070/chart/online'"
+                        class="btn btn-light" id="btn_power01">현재값</button>
+                    <button type="button" onclick="location.href='http://localhost:7070/graph/online'"
+                        class="btn btn-light" id="btn_power02" style="margin-left:10px">그래프</button>
+                    <button type="button" onclick="window.location.reload()" class="btn btn-light" id="btn_power03"
+                        style="margin-left:10px">새로고침</button>
+
+                    <label style="margin-left:30px"><input type="checkbox" name="graph1" checked="checked"> 목표량</label>
+                    <label style="margin-left:10px"><input type="checkbox" name="graph2" checked="checked">
+                        사용량</label>
+                    <label style="margin-left:10px"><input type="checkbox" name="graph3" checked="checked">
+                        미정</label>
                 </div>
 
+                <div>
+                    <p id="choices"></p>
+                </div>
             </div>
             <div class="right">
                 <div class="logo_box">
@@ -142,11 +150,13 @@
             .done(function (res) {
                 // 성공 시 동작
                 console.log('성공', res)
+
                 var checkSum = res.checksum;
                 var resDate = [];
                 var hour = [];
                 var current = [];
                 var target = [];
+
                 for (var i = 0; i <= 23; i += 1) {
                     for (var v = 0; v <= 50; v += 15) {
                         // console.log(v)
@@ -182,6 +192,7 @@
 
                     // The data for our dataset
                     data: {
+
                         labels: hour,
                         datasets: [
                             {
@@ -199,6 +210,14 @@
                                 // backgroundColor : 'rgba(39,39,39)',
                                 pointRadius: 0,
                                 data: target
+                            },
+                            {
+                                label: '미정',
+                                // backgroundColor: 'rgb(255, 99, 132)',
+                                borderColor: 'white',
+                                // backgroundColor : 'rgba(39,39,39)',
+                                pointRadius: 0
+                                //data: target
                             }
                         ]
                     },
@@ -224,6 +243,7 @@
                                 gridLines: {
                                 },
                                 ticks: {
+                                    min: 0
                                 },
                                 scaleLabel: {
                                     display: true,
@@ -237,46 +257,62 @@
                         }
                     }
                 });
-                
-                setInterval(function () {
-                $.ajax({
-                    url: 'http://localhost:5000/graph/1/200831',
-                    type: 'GET',
-                    data: {
-                        // 보낼 데이터
-                    },
-                    dataType: 'json'
-                })
-                    .done(function (res) {
-                        //console.log('res', res)
-                        //if(checkSum !== res.checksum) {
-                        checkSum = res.checksum
-                        var current = []
-                        var target = [];
-                        
-                        res.forEach(function (i) {
-                            //console.log(i)
-                            if(i.label !=='') {
-                                resDate.push(i.label)
-                            }
-                            //current.push(i.current)
-                            target.push(i.target)
-                        })                        
-                        addData(chart, current, 0);
-                        addData2(chart, target, 0);
-                        //}
+
+                $(':checkbox[name="graph1"]').change(function () {
+                    chart.data.datasets.find(function (ds) {
+                        if (ds.label == '목표량')
+                            ds.hidden = !ds.hidden;
                     });
+                    chart.update();
+                })
+
+                $(':checkbox[name="graph2"]').change(function () {
+                    chart.data.datasets.find(function (ds) {
+                        if (ds.label == '사용량')
+                            ds.hidden = !ds.hidden;
+                    });
+                    chart.update();
+                })
+
+                $(':checkbox[name="graph3"]').change(function () {
+                    chart.data.datasets.find(function (ds) {
+                        if (ds.label == '미정')
+                            ds.hidden = !ds.hidden;
+                    });
+                    chart.update();
+                })
+                // checkbox part -> visible/invisible
+
+                setInterval(function () {
+                    $.ajax({
+                        url: 'http://localhost:5000/graph/1/200831',
+                        type: 'GET',
+                        data: {
+                            // 보낼 데이터
+                        },
+                        dataType: 'json'
+                    })
+                        .done(function (res) {
+                            //console.log('res', res)
+                            //if(checkSum !== res.checksum) {
+                            checkSum = res.checksum
+                            var current = []
+                            var target = [];
+
+                            res.forEach(function (i) {
+                                //console.log(i)
+                                if (i.label !== '') {
+                                    resDate.push(i.label)
+                                }
+                                //current.push(i.current)
+                                target.push(i.target)
+                            })
+                            addData(chart, current, 0);
+                            addData2(chart, target, 0);
+                            //}
+                        });
                 }, 10000)
             });
-
-        function addData(chart, data, datasetIndex) {
-            chart.data.datasets[datasetIndex].data = data;
-            chart.update();
-        }
-        function addData2(chart, data) {
-            chart.data.datasets[0].data = data;
-            chart.update();
-        }
 
         $.ajax({
             url: 'http://localhost:5000/process',
