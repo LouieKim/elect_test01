@@ -1,2 +1,0 @@
-깃 브랜치
-dev_payment
