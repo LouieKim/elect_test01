@@ -19,7 +19,7 @@ def main():
             subprocess.call("supervisord -c /home/pi/electricity_meter/supervisord.conf", shell=True)
             #proc = subprocess.Popen("supervisord -c /etc/supervisord.conf")
             #print(proc.pid)
-			#print("Helloworld")
+			#print("This Branch")
         time.sleep(60)
 
 if __name__ == "__main__":
